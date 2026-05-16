@@ -1,6 +1,14 @@
 # 📲 Assistente de Lembretes via WhatsApp
 
-Um bot para WhatsApp que gerencia seus lembretes por mensagem de texto simples. Você escreve naturalmente e ele entende — sem comandos complicados.
+![Deploy](https://img.shields.io/badge/deploy-railway-6B44FF?logo=railway)
+![Node](https://img.shields.io/badge/node.js-20+-339933?logo=nodedotjs)
+![MySQL](https://img.shields.io/badge/mysql-8.0+-4479A1?logo=mysql)
+![Twilio](https://img.shields.io/badge/twilio-whatsapp-F22F46?logo=twilio)
+![License](https://img.shields.io/badge/license-ISC-blue)
+
+Um bot para WhatsApp que gerencia seus lembretes por mensagem de texto simples. Você escreve naturalmente e ele entende — sem comandos complicados, sem instalar nada.
+
+> 💼 Projeto desenvolvido como portfólio. Veja o post no LinkedIn: [clique aqui](https://github.com/EduadoSC/assistente-whatsapp)
 
 ---
 
@@ -8,11 +16,12 @@ Um bot para WhatsApp que gerencia seus lembretes por mensagem de texto simples. 
 
 | Ação | Exemplo |
 |---|---|
-| Criar lembrete | `me lembra amanhã às 9h de ligar pro João` |
-| Listar lembretes | `meus lembretes` |
-| Editar lembrete | `mudar ligar pro João pra 10h` |
-| Cancelar lembrete | `cancelar ligar pro João` |
-| Aviso automático | Bot manda mensagem no horário certo ⏰ |
+| ✅ Criar lembrete | `me lembra amanhã às 9h de ligar pro João` |
+| ✏️ Editar lembrete | `mudar ligar pro João pra 10h` |
+| ❌ Cancelar lembrete | `cancelar ligar pro João` |
+| 📋 Listar lembretes | `meus lembretes` |
+| ⏰ Aviso automático | Bot manda mensagem no horário certo |
+| 👥 Multi-usuário | Cada número tem seus próprios lembretes |
 
 ---
 
@@ -23,6 +32,7 @@ Um bot para WhatsApp que gerencia seus lembretes por mensagem de texto simples. 
 - **Twilio** — integração com WhatsApp
 - **node-cron** — disparo automático no horário certo
 - **dotenv** — variáveis de ambiente
+- **Railway** — hospedagem e banco de dados em produção
 
 ---
 
@@ -30,15 +40,15 @@ Um bot para WhatsApp que gerencia seus lembretes por mensagem de texto simples. 
 
 ### Pré-requisitos
 
-- Node.js instalado
-- MySQL rodando
+- Node.js 20+
+- MySQL rodando localmente
 - Conta no [Twilio](https://twilio.com) (gratuita)
 - Conta no [ngrok](https://ngrok.com) (gratuita)
 
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/assistente-whatsapp.git
+git clone https://github.com/EduadoSC/assistente-whatsapp.git
 cd assistente-whatsapp
 ```
 
@@ -49,8 +59,6 @@ npm install
 ```
 
 ### 3. Configure o banco de dados
-
-Crie o banco e a tabela no MySQL:
 
 ```sql
 CREATE DATABASE assistente;
@@ -65,8 +73,6 @@ CREATE TABLE lembretes (
     data DATE NOT NULL,
     enviado BOOLEAN DEFAULT FALSE
 );
-
-CREATE INDEX idx_lembretes_numero ON lembretes (numero);
 ```
 
 ### 4. Configure as variáveis de ambiente
@@ -75,7 +81,7 @@ CREATE INDEX idx_lembretes_numero ON lembretes (numero);
 cp .env.example .env
 ```
 
-Preencha o `.env` com seus dados:
+Preencha o `.env`:
 
 ```env
 DB_HOST=localhost
@@ -96,33 +102,41 @@ TWILIO_NUMBER=whatsapp:+14155238886
 node server.js
 ```
 
-### 6. Exponha o servidor com ngrok
+### 6. Exponha com ngrok
 
 ```bash
 ngrok http 3000
 ```
 
-Copie a URL gerada (ex: `https://abc123.ngrok-free.app`) e configure no Twilio.
+Copie a URL gerada e configure no Twilio Sandbox Settings:
+```
+https://sua-url.ngrok-free.app/webhook
+```
 
-### 7. Configure o Twilio Sandbox
+### 7. Ative o Twilio Sandbox
 
-1. Acesse **Messaging → Try it out → Send a WhatsApp message**
-2. Em **Sandbox Settings**, cole sua URL no campo **"When a message comes in"**:
-   ```
-   https://sua-url.ngrok-free.app/webhook
-   ```
-3. Ative o sandbox mandando a mensagem indicada pelo Twilio para `+1 415 523 8886`
+Em **Messaging → Try it out → Send a WhatsApp message**, mande a palavra de ativação indicada para `+1 415 523 8886`.
 
 ---
 
 ## ☁️ Deploy (Railway)
 
-Para deixar o bot online 24/7 sem precisar do computador ligado:
+O projeto está em produção no Railway com banco MySQL incluso.
 
 1. Suba o código no GitHub
 2. Acesse [railway.app](https://railway.app) e conecte o repositório
-3. Adicione as variáveis de ambiente do `.env` nas configurações do projeto
-4. Use a URL gerada pelo Railway no lugar do ngrok no Twilio
+3. Adicione um plugin **MySQL**
+4. Configure as variáveis de ambiente:
+
+```
+MYSQL_URL = ${{ MySQL.MYSQL_URL }}
+TWILIO_ACCOUNT_SID = ACxxx...
+TWILIO_AUTH_TOKEN = xxx...
+TWILIO_NUMBER = whatsapp:+14155238886
+```
+
+5. Gere o domínio público em **Settings → Networking → Generate Domain**
+6. Use essa URL no Twilio como webhook
 
 ---
 
@@ -130,7 +144,7 @@ Para deixar o bot online 24/7 sem precisar do computador ligado:
 
 - O Twilio Sandbox é gratuito e ideal para demonstrações
 - Cada número precisa ativar o sandbox mandando `join <palavra>` uma vez
-- O vínculo do sandbox expira após 72 horas sem uso
+- O vínculo expira após 72 horas sem uso
 
 ---
 
@@ -138,9 +152,15 @@ Para deixar o bot online 24/7 sem precisar do computador ligado:
 
 ```
 assistente-whatsapp/
-├── server.js       # Servidor principal, rotas e cron
-├── db.js           # Conexão com o banco de dados
-├── .env.example    # Modelo de variáveis de ambiente
+├── server.js        # Servidor principal, rotas e cron
+├── db.js            # Conexão com o banco de dados
+├── .env.example     # Modelo de variáveis de ambiente
 ├── .gitignore
 └── package.json
 ```
+
+---
+
+## 👤 Autor
+
+**Eduardo Sales** — [LinkedIn](https://www.linkedin.com/in/eduardosales-91824b25b) · [GitHub](https://github.com/EduadoSC)
